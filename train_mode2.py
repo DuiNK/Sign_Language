@@ -27,8 +27,8 @@ data_dir_train = '/content/Sign_Language/data/train'
 #data_dir_val = '/content/Sign_Language/data/test'
 # Create a dataset
 batch_size = 32
-img_height = 224
-img_width = 224
+img_height = 112
+img_width = 112
 train_ds = tf.keras.utils.image_dataset_from_directory(
   data_dir_train,
   label_mode='int',
@@ -123,9 +123,9 @@ gesture_names = {0: 'A',
 
 
 image_path = '/content/drive/MyDrive/datatest'
-models_path = '/content/MiAI_Hand_Lang/model/saved_model2.hdf5'
+models_path = '/content/gdrive/MyDrive/Colab Notebooks/saved_model2.hdf5'
 rgb = False
-imageSize = 224
+imageSize = 112
 '''
 image = tf.keras.preprocessing.image.load_img(image_path)
 
@@ -207,11 +207,10 @@ for layer in base_model.layers:
     layer.trainable = False
 
 model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(train_ds, epochs=200, batch_size=32, validation_data=(val_ds), verbose=1,
+model.fit(train_ds, epochs=150, batch_size=32, validation_data=(val_ds), verbose=1,
           callbacks=[early_stopping, model_checkpoint])
 
 # Luu model da train ra file
-model.save('/content/MiAI_Hand_Lang/model/mymodel2.h5')
-new_model = keras.models.load_model('/content/MiAI_Hand_Lang/model/mymodel2.h5')
-
+model.save('/content/gdrive/MyDrive/Colab Notebooks/mymodel2.h5')
+new_model = keras.models.load_model('/content/gdrive/MyDrive/Colab Notebooks/mymodel2.h5')
 
