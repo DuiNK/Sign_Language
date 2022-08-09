@@ -23,6 +23,38 @@ from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 #vggmodel = VGG16(weights='imagenet', include_top=True)
 
+data_dir_train = '/content/Sign_Language/data/train'
+#data_dir_val = '/content/Sign_Language/data/test'
+# Create a dataset
+batch_size = 32
+img_height = 224
+img_width = 224
+train_ds = tf.keras.utils.image_dataset_from_directory(
+  data_dir_train,
+  label_mode='int',
+  validation_split=0.2,
+  subset="training",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+
+val_ds = tf.keras.utils.image_dataset_from_directory(
+  data_dir_train,
+  label_mode='int',
+  validation_split=0.2,
+  subset="validation",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+
+AUTOTUNE = tf.data.AUTOTUNE
+
+train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+
+
+   
 # Dinh nghia cac bien
 
 gestures = {'Aa': 'A', 'Bb': 'B', 'Cc':'C', 'Dd':'D', 'Ee':'E', 'Ff':'F', 'Gg':'G', 'Hh':'H',
@@ -93,8 +125,9 @@ gesture_names = {0: 'A',
 image_path = '/content/drive/MyDrive/datatest'
 models_path = '/content/MiAI_Hand_Lang/model/saved_model2.hdf5'
 rgb = False
-imageSize = 112
-
+imageSize = 224
+'''
+image = tf.keras.preprocessing.image.load_img(image_path)
 
 # Ham xu ly anh resize ve 224x224 va chuyen ve numpy array
 def process_image(path):
@@ -115,6 +148,7 @@ def process_data(X_data, y_data):
     y_data = to_categorical(y_data)
     return X_data, y_data
 
+
 # Ham duuyet thu muc anh dung de train
 def walk_file_tree(image_path):
     X_data = []
@@ -128,7 +162,6 @@ def walk_file_tree(image_path):
                 print(gestures_map[gesture_name])
                 y_data.append(gestures_map[gesture_name])
                 X_data.append(process_image(path))
-
             else:
                 continue
 
@@ -140,6 +173,7 @@ X_data, y_data = walk_file_tree(image_path)
 
 # Phan chia du lieu train va test theo ty le 80/20
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size = 0.2, random_state=12, stratify=y_data)
+'''
 
 # Dat cac checkpoint de luu lai model tot nhat
 model_checkpoint = ModelCheckpoint(filepath=models_path, save_best_only=True)
@@ -165,15 +199,15 @@ x = Dense(128, activation='relu', name='fc3')(x)
 x = Dropout(0.5)(x)
 x = Dense(64, activation='relu', name='fc4')(x)
 
-predictions = Dense(25, activation='softmax')(x)
+predictions = Dense(26, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
 # Dong bang cac lop duoi, chi train lop ben tren minh them vao
 for layer in base_model.layers:
     layer.trainable = False
 
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=1,
+model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_ds, epochs=200, batch_size=32, validation_data=(val_ds), verbose=1,
           callbacks=[early_stopping, model_checkpoint])
 
 # Luu model da train ra file
