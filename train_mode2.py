@@ -23,29 +23,31 @@ from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 #vggmodel = VGG16(weights='imagenet', include_top=True)
 
+
 data_dir_train = '/content/Sign_Language/data/train'
 #data_dir_val = '/content/Sign_Language/data/test'
 # Create a dataset
 batch_size = 32
-img_height = 112
-img_width = 112
+img_height = 50
+img_width = 50
+
 train_ds = tf.keras.utils.image_dataset_from_directory(
-  data_dir_train,
-  label_mode='int',
-  validation_split=0.2,
-  subset="training",
-  seed=123,
-  image_size=(img_height, img_width),
-  batch_size=batch_size)
+    data_dir_train,
+    label_mode='categorical',
+    validation_split=0.2,
+    subset="training",
+    seed=123,
+    image_size=(img_height, img_width),
+    batch_size=batch_size)
 
 val_ds = tf.keras.utils.image_dataset_from_directory(
-  data_dir_train,
-  label_mode='int',
-  validation_split=0.2,
-  subset="validation",
-  seed=123,
-  image_size=(img_height, img_width),
-  batch_size=batch_size)
+    data_dir_train,
+    label_mode='categorical',
+    validation_split=0.2,
+    subset="validation",
+    seed=123,
+    image_size=(img_height, img_width),
+    batch_size=batch_size)
 
 AUTOTUNE = tf.data.AUTOTUNE
 
@@ -53,8 +55,6 @@ train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
 val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 
-
-   
 # Dinh nghia cac bien
 
 gestures = {'Aa': 'A', 'Bb': 'B', 'Cc':'C', 'Dd':'D', 'Ee':'E', 'Ff':'F', 'Gg':'G', 'Hh':'H',
@@ -125,7 +125,7 @@ gesture_names = {0: 'A',
 image_path = '/content/drive/MyDrive/datatest'
 models_path = '/content/gdrive/MyDrive/Colab Notebooks/saved_model2.hdf5'
 rgb = False
-imageSize = 112
+imageSize = 50
 '''
 image = tf.keras.preprocessing.image.load_img(image_path)
 
@@ -174,6 +174,13 @@ X_data, y_data = walk_file_tree(image_path)
 # Phan chia du lieu train va test theo ty le 80/20
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size = 0.2, random_state=12, stratify=y_data)
 '''
+#chuan hoa du lieu
+normalization_layer = layers.Rescaling(1./255)
+normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(normalized_ds))
+first_image = image_batch[0]
+# Notice the pixel values are now in `[0,1]`.
+print(np.min(first_image), np.max(first_image))
 
 # Dat cac checkpoint de luu lai model tot nhat
 model_checkpoint = ModelCheckpoint(filepath=models_path, save_best_only=True)
@@ -192,12 +199,12 @@ base_model = model1
 # Them cac lop ben tren
 x = base_model.output
 x = Flatten()(x)
-x = Dense(128, activation='relu', name='fc1')(x)
-x = Dense(128, activation='relu', name='fc2')(x)
-x = Dense(128, activation='relu', name='fc2a')(x)
-x = Dense(128, activation='relu', name='fc3')(x)
-x = Dropout(0.5)(x)
-x = Dense(64, activation='relu', name='fc4')(x)
+x = Dense(64, activation='relu', name='fc1')(x)
+x = Dense(64, activation='relu', name='fc2')(x)
+#x = Dense(128, activation='relu', name='fc2a')(x)
+x = Dense(64, activation='relu', name='fc3')(x)
+x = Dropout(0.2)(x)
+x = Dense(32, activation='relu', name='fc4')(x)
 
 predictions = Dense(26, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
@@ -206,7 +213,7 @@ model = Model(inputs=base_model.input, outputs=predictions)
 for layer in base_model.layers:
     layer.trainable = False
 
-model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.fit(train_ds, epochs=150, batch_size=32, validation_data=(val_ds), verbose=1,
           callbacks=[early_stopping, model_checkpoint])
 
