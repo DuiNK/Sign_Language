@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from keras.models import load_model
 import time
+import tensorflow as tf
 
 # Cac khai bao bien
 prediction = ''
@@ -21,28 +22,30 @@ gesture_names = {0: 'A',
                  7: 'H',
                  8: 'I',
                  9: 'J',
-                 10: 'L',
-                 11: 'M',
-                 12: 'N',
-                 13: 'O',
-                 14: 'P',
-                 15: 'Q',
-                 16: 'R',
-                 17: 'S',
-                 18: 'T',
-                 19: 'U',
-                 20: 'V',
-                 21: 'W',
-                 22: 'X',
-                 23: 'Y',
-                 24: 'Z'}
+                 10: 'K',
+                 11: 'L',
+                 12: 'M',
+                 13: 'N',
+                 14: 'O',
+                 15: 'P',
+                 16: 'Q',
+                 17: 'R',
+                 18: 'S',
+                 19: 'T',
+                 20: 'U',
+                 21: 'V',
+                 22: 'W',
+                 23: 'X',
+                 24: 'Y',
+                 25: 'Z'}
 # Load model tu file da train
-model = load_model('models/mymodel1.h5')
+model = load_model('models/mymodel2 (6).h5')
 
 # Ham de predict xem la ky tu gi
 def predict_rgb_image_vgg(image):
     image = np.array(image, dtype='float32')
     image /= 255
+#    image = tf.expand_dims(image, 0)
     pred_array = model.predict(image)
     print(f'pred_array: {pred_array}')
     result = gesture_names[np.argmax(pred_array)]
