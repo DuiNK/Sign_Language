@@ -22,77 +22,33 @@ from sklearn.model_selection import train_test_split
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 #vggmodel = VGG16(weights='imagenet', include_top=True)
-
-
-data_dir_train = '/content/Sign_Language/data/train'
-#data_dir_val = '/content/Sign_Language/data/test'
-# Create a dataset
-batch_size = 32
-img_height = 50
-img_width = 50
-
-train_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir_train,
-    label_mode='categorical',
-    validation_split=0.2,
-    subset="training",
-    seed=123,
-    image_size=(img_height, img_width),
-    batch_size=batch_size)
-
-val_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir_train,
-    label_mode='categorical',
-    validation_split=0.2,
-    subset="validation",
-    seed=123,
-    image_size=(img_height, img_width),
-    batch_size=batch_size)
-
-AUTOTUNE = tf.data.AUTOTUNE
-
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-
-# Dinh nghia cac bien
-
-gestures = {'Aa': 'A', 'Bb': 'B', 'Cc':'C', 'Dd':'D', 'Ee':'E', 'Ff':'F', 'Gg':'G', 'Hh':'H',
-           'Ia': 'I', 'Jj':'J', 'Ll':'L', 'Mm':'M', 'Nn':'N', 'Oo':'O', 'Pp':'P',
-           'So': 'S', 'Tt':'T', 'Uu':'U', 'Vv':'V', 'Yy':'Y', 'Zz':'Z',
-           'Rb': 'R',
-           'Qu': 'Q',
-            'We': 'W',
-            'Xi': 'X'
-            }
-
-gestures_map = {'A': 0,
-                'B': 1,
-                'C': 2,
-                'D': 3,
-                'E': 4,
-                'F': 5,
-                'G': 6,
-                'H': 7,
-                'I': 8,
-                'J': 9,
-                'K': 10,
-                'L': 11,
-                'M': 12,
-                'N': 13,
-                'O': 14,
-                'P': 15,
-                'Q': 16,
-                'R': 17,
-                'S': 18,
-                'T': 19,
-                'U': 20,
-                'V': 21,
-                'W': 22,
-                'X': 23,
-                'Y': 24,
-                'Z': 25}
-
+rgb = False
+gestures_map = {'0': 0,
+                '1': 1,
+                '2': 2,
+                '3': 3,
+                '4': 4,
+                '5': 5,
+                '6': 6,
+                '7': 7,
+                '8': 8,
+                '9': 9,
+                '10': 10,
+                '11': 11,
+                '12': 12,
+                '13': 13,
+                '14': 14,
+                '15': 15,
+                '16': 16,
+                '17': 17,
+                '18': 18,
+                '19': 19,
+                '20': 20,
+                '21': 21,
+                '22': 22,
+                '23': 23,
+                '24': 24,
+                '25': 25}
 
 gesture_names = {0: 'A',
                  1: 'B',
@@ -121,22 +77,6 @@ gesture_names = {0: 'A',
                  24: 'Y',
                  25: 'Z'}
 
-
-image_path = '/content/drive/MyDrive/datatest'
-models_path = '/content/gdrive/MyDrive/Colab Notebooks/saved_model2.hdf5'
-rgb = False
-imageSize = 50
-'''
-image = tf.keras.preprocessing.image.load_img(image_path)
-
-# Ham xu ly anh resize ve 224x224 va chuyen ve numpy array
-def process_image(path):
-    img = Image.open(path)
-    img = img.resize((imageSize, imageSize))
-    img = np.array(img)
-    return img
-
-# Xu ly du lieu dau vao
 def process_data(X_data, y_data):
     X_data = np.array(X_data, dtype = 'float32')
     if rgb:
@@ -147,40 +87,107 @@ def process_data(X_data, y_data):
     y_data = np.array(y_data)
     y_data = to_categorical(y_data)
     return X_data, y_data
+#data_dir_train = '/content/Sign_Language/data/train'
+#data_dir_val = '/content/Sign_Language/data/test'
+# Create a dataset
+batch_size = 32
+img_height = 50
+img_width = 50
 
+rootpath = '/content/Sign_Language/data/test'
+list = os.listdir(rootpath) #列出文件夹下所有的目录与文件
+#设定图像宽高
+imgwidth = 50
+imgheight = 50
 
-# Ham duuyet thu muc anh dung de train
-def walk_file_tree(image_path):
-    X_data = []
-    y_data = []
-    for directory, subdirectories, files in os.walk(image_path):
-        for file in files:
-            if not file.startswith('.'):
-                path = os.path.join(directory, file)
-                gesture_name = gestures[file[0:2]]
-                print(gesture_name)
-                print(gestures_map[gesture_name])
-                y_data.append(gestures_map[gesture_name])
-                X_data.append(process_image(path))
-            else:
-                continue
-
-    X_data, y_data = process_data(X_data, y_data)
-    return X_data, y_data
-
-# Load du lieu vao X va Y
-X_data, y_data = walk_file_tree(image_path)
-
-# Phan chia du lieu train va test theo ty le 80/20
-X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size = 0.2, random_state=12, stratify=y_data)
+imgdata_test = []
+imgtag_test = []
+print(len(list))
+for i in range(len(list)):
+    #对于子目录进行处理
+    # print(i)
+    currentpath = rootpath+ "/" + list[i]
+    currentlist = os.listdir(currentpath)
+    print(list[i])
+    for j in range(len(currentlist)):
+        #图像位置
+        imgpath = currentpath + "/" + currentlist[j]
+        #有后缀为db的文件
+        if currentlist[j][-3:] == "jpg":
+            img = cv2.imread(imgpath,0)
+            img = cv2.resize(img,(imgwidth,imgheight))
+            #name = gestures_map[os.path.basename(imgpath)]
+            Path = os.path.dirname(imgpath)
+            name_test = os.path.basename(Path)
+            #print(img)
+            #print(name_test)
+            imgtag_test.append(gestures_map[name_test])
+            imgdata_test.append(img)
+#    imgdata_test, imgtag_test = process_data(imgdata_test, imgtag_test)
+#imgtag_test = np.array(imgtag_test)
+#imgdata_test = np.array(imgdata_test)
 '''
-#chuan hoa du lieu
-normalization_layer = layers.Rescaling(1./255)
-normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-image_batch, labels_batch = next(iter(normalized_ds))
-first_image = image_batch[0]
-# Notice the pixel values are now in `[0,1]`.
-print(np.min(first_image), np.max(first_image))
+imgtag = imgtag.reshape(imgtag.shape[0],1)
+#增加一维灰度维
+imgdata = imgdata.reshape(imgdata.shape[0],imgdata.shape[1],imgdata.shape[2],1)
+print(imgdata.shape,imgtag.shape)
+#存储
+'''
+rootpath_train = '/content/Sign_Language/data/train'
+list_train = os.listdir(rootpath_train) #列出文件夹下所有的目录与文件
+#设定图像宽高
+imgwidth = 50
+imgheight = 50
+
+imgdata_train = []
+imgtag_train = []
+print(len(list_train))
+for i in range(len(list_train)):
+    #对于子目录进行处理
+    # print(i)
+    currentpath = rootpath_train+ "/" + list[i]
+    currentlist = os.listdir(currentpath)
+    print(list[i])
+    for j in range(len(currentlist)):
+        #图像位置
+        imgpath = currentpath + "/" + currentlist[j]
+        #有后缀为db的文件
+        if currentlist[j][-3:] == "jpg":
+            img = cv2.imread(imgpath,0)
+            img = cv2.resize(img,(imgwidth,imgheight))
+            Path = os.path.dirname(imgpath)
+            name_train = os.path.basename(Path)
+            imgtag_train.append(name_train)
+            imgdata_train.append(img)
+    
+#imgtag_train = np.array(imgtag_train)
+#imgdata_train = np.array(imgdata_train)
+
+# Dinh nghia cac bien
+
+image_path = '/content/drive/MyDrive/datatest'
+models_path = '/content/gdrive/MyDrive/Colab Notebooks/saved_model2.hdf5'
+
+imageSize = 50
+'''
+image = tf.keras.preprocessing.image.load_img(image_path)
+
+# Ham xu ly anh resize ve 224x224 va chuyen ve numpy array
+def process_image(path):
+    img = Image.open(path)
+    img = img.resize((imageSize, imageSize))
+    img = np.array(img)
+    return img
+'''
+imgdata_train, imgtag_train = process_data(imgdata_train, imgtag_train)
+imgdata_test, imgtag_test = process_data(imgdata_test, imgtag_test)
+# Load du lieu vao X va Y
+X_train = imgdata_train
+X_test = imgdata_test
+y_train = imgtag_train
+y_test = imgtag_test
+# Phan chia du lieu train va test theo ty le 80/20
+#X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size = 0.2, random_state=12, stratify=y_data)
 
 # Dat cac checkpoint de luu lai model tot nhat
 model_checkpoint = ModelCheckpoint(filepath=models_path, save_best_only=True)
@@ -214,10 +221,12 @@ for layer in base_model.layers:
     layer.trainable = False
 
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit(train_ds, epochs=150, batch_size=32, validation_data=(val_ds), verbose=1,
+model.fit(X_train, y_train, epochs=150, batch_size=32, validation_data=(X_test, y_test), verbose=1,
           callbacks=[early_stopping, model_checkpoint])
 
 # Luu model da train ra file
 model.save('/content/gdrive/MyDrive/Colab Notebooks/mymodel2.h5')
 new_model = keras.models.load_model('/content/gdrive/MyDrive/Colab Notebooks/mymodel2.h5')
+
+
 
